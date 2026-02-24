@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>City of North Platte — Travel &amp; Expense Form</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12.5px; color: #111; background: #e8ecf0; }
+  .page { max-width: 720px; margin: 16px auto; padding: 24px 36px 20px; background: #fff; min-height: 100vh; box-shadow: 0 1px 6px rgba(0,0,0,0.12); }
+  .row { display: flex; align-items: baseline; flex-wrap: wrap; margin-bottom: 1px; line-height: 2.0; }
+
+  /* Underline inputs */
+  .u {
+    font-family: inherit; font-size: inherit; background: transparent; border: none;
+    border-bottom: 1px solid #444; outline: none; padding: 0 2px 1px; margin: 0 3px;
+    color: #0033aa; caret-color: #0033aa;
+  }
+  .u:focus { border-bottom-color: #0055dd; background: #f0f4ff; border-bottom-width: 2px; }
+  .u::placeholder { color: #bbb; }
+
+  /* Toolbar */
+  .toolbar {
+    font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; padding: 8px 14px;
+    margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px; background: #f5f5f5; border: 1px solid #ccc; border-radius: 3px;
+  }
+  .toolbar button, .sp-panel button {
+    font-family: 'Segoe UI', Arial, sans-serif; font-weight: 600; border-radius: 3px;
+    cursor: pointer; border: none; padding: 5px 14px; font-size: 11px; color: #fff;
+  }
+  .btn-dark { background: #1a3a5c; }
+  .btn-dark:hover { background: #2a5a8c; }
+  .btn-green { background: #2a8a4a; }
+  .btn-gray { background: #555; }
+  .btn-gray:hover { background: #666; }
+  .btn-outline { background: #fff; color: #444 !important; border: 1px solid #aaa !important; }
+  .btn-outline:hover { background: #f0f0f0; }
+  .btn-blue { background: #0078D4; }
+  .btn-blue:hover { background: #106ebe; }
+  .btn-sm { font-size: 10px; padding: 3px 10px; }
+  .btn-calc { font-family: Arial; font-size: 9px; padding: 2px 7px; margin-left: 4px; background: #eee; border: 1px solid #bbb !important; border-radius: 2px; color: #333 !important; cursor: pointer; }
+
+  /* Status messages */
+  .status { font-family: 'Segoe UI', Arial; font-size: 11px; padding: 5px 10px; border-radius: 2px; margin-bottom: 10px; }
+  .status-s { background: #e6f6ea; color: #1a6a3a; }
+  .status-e { background: #fde8e8; color: #8a1a1a; }
+  .status-l, .status-i { background: #eef2f7; color: #1a3a5c; }
+
+  /* SharePoint Panel */
+  .sp-panel { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; background: #f0f5fa; border: 1px solid #b8c8d8; border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+  .sp-header {
+    display: flex; align-items: center; justify-content: space-between; padding: 10px 16px;
+    cursor: pointer; background: #0078D4; color: #fff; border-radius: 6px;
+  }
+  .sp-header.open { border-radius: 6px 6px 0 0; }
+  .sp-body { padding: 14px 16px; display: none; }
+  .sp-body.open { display: block; }
+  .sp-lbl { font-size: 10px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 2px; margin-top: 8px; }
+  .sp-sel, .sp-inp {
+    font-family: 'Segoe UI', sans-serif; font-size: 11px; padding: 5px 6px;
+    border: 1px solid #b8c8d8; border-radius: 3px; background: #fff; outline: none; width: 100%;
+  }
+  .sp-tag { font-size: 11px; padding: 4px 10px; border-radius: 3px; margin-top: 6px; }
+  .sp-quick { margin-bottom: 12px; padding: 8px 10px; background: #e3ecf5; border-radius: 4px; }
+  .sp-quick-title { font-size: 10px; font-weight: 700; color: #1a3a5c; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .sp-map-row { display: flex; gap: 4px; align-items: center; margin-top: 4px; }
+  .sp-map-row select { width: 180px; }
+  .sp-map-row .arrow { font-size: 12px; color: #888; }
+  .sp-map-row .sp-remove { font-size: 11px; color: #c00; background: none; border: none !important; cursor: pointer; padding: 2px 6px; }
+  .sp-connected { font-size: 10px; background: rgba(255,255,255,0.25); padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
+  .sp-chevron { font-size: 16px; transition: transform 0.2s; }
+  .sp-chevron.open { transform: rotate(180deg); }
+
+  /* Separator */
+  .sep { text-align: center; margin: 10px 0; color: #666; letter-spacing: 1.5px; font-size: 12px; overflow: hidden; }
+
+  /* Signature blocks */
+  .sig-row { display: flex; justify-content: space-between; margin-top: 20px; margin-bottom: 2px; }
+  .sig-label { font-size: 11px; }
+  .sig-sub { font-size: 10px; color: #555; }
+
+  @media print {
+    body { background: #fff; }
+    .page { box-shadow: none; margin: 0; padding: 20px 30px; }
+    .toolbar, .sp-panel, .btn-calc, .status { display: none !important; }
+    .u { border-bottom-color: transparent; color: #000; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page" id="formPage">
+
+  <!-- ═══════ SHAREPOINT PANEL ═══════ -->
+  <div class="sp-panel">
+    <div class="sp-header" id="spHeader" onclick="toggleSP()">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:15px">🏛️</span>
+        <strong>SharePoint — City of North Platte</strong>
+        <span class="sp-connected" id="spConnBadge" style="display:none">● Connected</span>
+      </div>
+      <span class="sp-chevron" id="spChevron">▾</span>
+    </div>
+    <div class="sp-body" id="spBody">
+      <!-- Quick Pull -->
+      <div class="sp-quick" id="quickPullSection" style="display:none">
+        <div class="sp-quick-title">Quick Pull from Saved Lists</div>
+        <div id="quickPullButtons" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+
+      <!-- Connect -->
+      <div id="spConnectSection">
+        <p style="font-size:11px;color:#555;margin:0 0 8px">Uses the City app registration (client credentials) — no sign-in needed.</p>
+        <button class="btn-blue" onclick="spConnect()">Connect to City SharePoint</button>
+      </div>
+
+      <!-- Site/List/Mapping -->
+      <div id="spBrowseSection" style="display:none">
+        <label class="sp-lbl">SharePoint Site</label>
+        <select class="sp-sel" id="spSiteSelect" onchange="spSelectSite(this.value)"><option value="">-- Select a site --</option></select>
+
+        <div id="spListSection" style="display:none">
+          <label class="sp-lbl">List</label>
+          <select class="sp-sel" id="spListSelect" onchange="spSelectList(this.value)"><option value="">-- Select a list --</option></select>
+        </div>
+
+        <div id="spMapSection" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+            <span style="font-size:11px;font-weight:700;color:#1a3a5c">Column → Form Field Mappings</span>
+            <div>
+              <button class="btn-outline btn-sm" onclick="spAddColMap()">+ Column</button>
+              <button class="btn-gray btn-sm" onclick="spSaveMapping()">💾 Save</button>
+            </div>
+          </div>
+          <div id="spColMaps"></div>
+
+          <div id="spItemSection" style="display:none;margin-top:10px">
+            <label class="sp-lbl">Select Row (<span id="spItemCount">0</span> items)</label>
+            <select class="sp-sel" id="spItemSelect"><option value="">-- First item (default) --</option></select>
+          </div>
+
+          <div style="margin-top:10px">
+            <button class="btn-blue" style="font-size:13px;padding:8px 24px" onclick="spPullData()">⬇ Pull Into Form</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="spStatus"></div>
+    </div>
+  </div>
+
+  <!-- ═══════ PDF TOOLBAR ═══════ -->
+  <div class="toolbar">
+    <span><strong>📄 PDF Template</strong></span>
+    <div style="display:flex;gap:6px;align-items:center">
+      <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="loadPDF(this)">
+      <button class="btn-gray" id="pdfBtn" onclick="document.getElementById('pdfInput').click()">Upload PDF</button>
+      <button class="btn-dark" onclick="generatePDF()">Generate PDF ↓</button>
+      <button class="btn-outline" onclick="clearForm()">Clear</button>
+    </div>
+  </div>
+  <div id="pdfStatus"></div>
+
+  <!-- ═══════ FORM DOCUMENT ═══════ -->
+  <div style="text-align:center;font-weight:bold;font-size:14px;margin-bottom:8px">
+    DEPARTMENT: <input class="u" id="f_department" style="width:230px">
+  </div>
+
+  <div class="row">
+    <span>In compliance with the City of North Platte, NE, policy manual, I</span>
+    <input class="u" id="f_employeeName" style="width:190px">
+  </div>
+  <div class="row">
+    <span>herby request Educational, Training, or other City Business leave from, (time)</span>
+    <input class="u" id="f_fromTime" style="width:75px">
+    <span>(date)</span>
+    <input class="u" id="f_fromDate" style="width:95px">
+    <span>,</span>
+  </div>
+  <div class="row">
+    <span>to, (time)</span>
+    <input class="u" id="f_toTime" style="width:75px">
+    <span>,(date)</span>
+    <input class="u" id="f_toDate" style="width:105px">
+    <span>, for the purpose of attending</span>
+    <input class="u" id="f_purpose" style="width:130px">
+  </div>
+  <div class="row">
+    <input class="u" id="f_purpose2" style="width:280px">
+  </div>
+  <div style="text-align:center;font-size:11px;color:#555">(location)</div>
+  <div class="row">
+    <input class="u" id="f_location" style="width:100%">
+  </div>
+
+  <!-- PREPAID -->
+  <div class="row" style="margin-top:6px">
+    <span>If leave is authorized, costs are requested to be prepaid for:</span>
+    <span style="margin-left:auto;font-size:11px">Check #'s</span>
+  </div>
+
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span>Registration</span></div><span style="margin:0 4px">=</span><input class="u" id="f_regCheck" style="width:105px"></div>
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span>Commercial Travel</span></div><span style="margin:0 4px">=</span><input class="u" id="f_travelCheck" style="width:105px"></div>
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span>Lodging</span><input class="u" id="f_lodgingNights" style="width:65px" oninput="autoCalcLodging('lodging')"><span>nights @</span><input class="u" id="f_lodgingRate" style="width:85px" oninput="autoCalcLodging('lodging')"></div><span style="margin:0 4px">=</span><input class="u" id="f_lodgingTotal" style="width:105px"></div>
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span>Mileage</span><input class="u" id="f_mileageMiles" style="width:65px" oninput="autoCalcMileage('mileage')"><span>miles @</span><input class="u" id="f_mileageRate" style="width:55px" oninput="autoCalcMileage('mileage')"></div><span style="margin:0 4px">=</span><input class="u" id="f_mileageTotal" style="width:105px"></div>
+
+  <div class="row" style="margin-top:2px"><span style="font-weight:bold">Meals</span><span style="margin-left:24px;font-size:11px">In State</span><span style="margin-left:55px;font-size:11px">Out State</span></div>
+
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span style="width:62px;display:inline-block">Breakfast</span><input class="u" id="f_breakfastIS" style="width:35px" oninput="autoCalcMeal('breakfast')"><span>@</span><input class="u" id="f_breakfastISRate" style="width:48px" oninput="autoCalcMeal('breakfast')"><input class="u" id="f_breakfastOS" style="width:35px" oninput="autoCalcMeal('breakfast')"><span>@</span><input class="u" id="f_breakfastOSRate" style="width:48px" oninput="autoCalcMeal('breakfast')"></div><span style="margin:0 4px">=</span><input class="u" id="f_breakfastTotal" style="width:105px"></div>
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span style="width:62px;display:inline-block">Lunch</span><input class="u" id="f_lunchIS" style="width:35px" oninput="autoCalcMeal('lunch')"><span>@</span><input class="u" id="f_lunchISRate" style="width:48px" oninput="autoCalcMeal('lunch')"><input class="u" id="f_lunchOS" style="width:35px" oninput="autoCalcMeal('lunch')"><span>@</span><input class="u" id="f_lunchOSRate" style="width:48px" oninput="autoCalcMeal('lunch')"></div><span style="margin:0 4px">=</span><input class="u" id="f_lunchTotal" style="width:105px"></div>
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span style="width:62px;display:inline-block">Supper</span><input class="u" id="f_supperIS" style="width:35px" oninput="autoCalcMeal('supper')"><span>@</span><input class="u" id="f_supperISRate" style="width:48px" oninput="autoCalcMeal('supper')"><input class="u" id="f_supperOS" style="width:35px" oninput="autoCalcMeal('supper')"><span>@</span><input class="u" id="f_supperOSRate" style="width:48px" oninput="autoCalcMeal('supper')"></div><span style="margin:0 4px">=</span><input class="u" id="f_supperTotal" style="width:105px"></div>
+
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span>Other </span><input class="u" id="f_other1Desc" style="width:215px"></div><span style="margin:0 4px">=</span><input class="u" id="f_other1Total" style="width:105px"></div>
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span style="display:inline-block;width:38px"></span><input class="u" id="f_other2Desc" style="width:215px"></div><span style="margin:0 4px">=</span><input class="u" id="f_other2Total" style="width:105px"></div>
+
+  <div class="row" style="margin-top:4px">
+    <span style="margin-left:55px">Total Prepaid Requested</span>
+    <span style="margin-left:28px">$</span>
+    <input class="u" id="f_totalPrepaid" style="width:105px">
+    <button class="btn-calc" onclick="calcPrepaid()">Σ</button>
+  </div>
+
+  <div class="row" style="margin-top:12px">
+    <span>I further request advance travel expense money of&nbsp;&nbsp;$</span>
+    <input class="u" id="f_advanceMoney" style="width:115px">
+    <span>&nbsp;and will upon my return, submit an</span>
+  </div>
+  <div style="margin-bottom:8px">itemized statement of actual expenses incurred in the space below.</div>
+
+  <div class="sig-row">
+    <div><input class="u" style="width:225px" disabled><div class="sig-label">Employee Signature</div></div>
+    <div><input class="u" id="f_deptHead" style="width:225px"><div class="sig-label">Department Head</div></div>
+  </div>
+  <div class="sig-row" style="margin-top:14px;margin-bottom:4px">
+    <div><input class="u" id="f_cityAdmin" style="width:225px"><div class="sig-label">City Administrator</div></div>
+    <div><input class="u" id="f_approvalDate" style="width:160px"><div class="sig-label" style="text-align:center">Date</div></div>
+  </div>
+
+  <div class="sep">********************************************************************************************</div>
+
+  <!-- ═══════ EXPENSE REPORT ═══════ -->
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+    <span style="font-weight:bold;font-size:13px;letter-spacing:1px">EXPENSE REPORT</span>
+    <div style="text-align:right;font-size:11px"><div>Distribution</div><div>Account Number</div></div>
+  </div>
+
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span>Registration</span></div><span style="margin:0 4px">=</span><input class="u" id="f_reg2" style="width:105px"></div>
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span>Commercial Travel</span></div><span style="margin:0 4px">=</span><input class="u" id="f_travel2" style="width:105px"></div>
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span>Lodging</span><input class="u" id="f_lodgingNights2" style="width:65px" oninput="autoCalcLodging('lodging2')"><span>nights @</span><input class="u" id="f_lodgingRate2" style="width:85px" oninput="autoCalcLodging('lodging2')"></div><span style="margin:0 4px">=</span><input class="u" id="f_lodgingTotal2" style="width:105px"></div>
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span>Mileage</span><input class="u" id="f_mileageMiles2" style="width:65px" oninput="autoCalcMileage('mileage2')"><span>miles @</span><input class="u" id="f_mileageRate2" style="width:55px" oninput="autoCalcMileage('mileage2')"></div><span style="margin:0 4px">=</span><input class="u" id="f_mileageTotal2" style="width:105px"></div>
+
+  <div class="row" style="margin-top:2px"><span style="font-weight:bold">Meals</span><span style="margin-left:24px;font-size:11px">In State</span><span style="margin-left:55px;font-size:11px">Out State</span></div>
+
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span style="width:62px;display:inline-block">Breakfast</span><input class="u" id="f_breakfastIS2" style="width:35px" oninput="autoCalcMeal2('breakfast')"><span>@</span><input class="u" id="f_breakfastISRate2" style="width:48px" oninput="autoCalcMeal2('breakfast')"><input class="u" id="f_breakfastOS2" style="width:35px" oninput="autoCalcMeal2('breakfast')"><span>@</span><input class="u" id="f_breakfastOSRate2" style="width:48px" oninput="autoCalcMeal2('breakfast')"></div><span style="margin:0 4px">=</span><input class="u" id="f_breakfastTotal2" style="width:105px"></div>
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span style="width:62px;display:inline-block">Lunch</span><input class="u" id="f_lunchIS2" style="width:35px" oninput="autoCalcMeal2('lunch')"><span>@</span><input class="u" id="f_lunchISRate2" style="width:48px" oninput="autoCalcMeal2('lunch')"><input class="u" id="f_lunchOS2" style="width:35px" oninput="autoCalcMeal2('lunch')"><span>@</span><input class="u" id="f_lunchOSRate2" style="width:48px" oninput="autoCalcMeal2('lunch')"></div><span style="margin:0 4px">=</span><input class="u" id="f_lunchTotal2" style="width:105px"></div>
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span style="width:62px;display:inline-block">Supper</span><input class="u" id="f_supperIS2" style="width:35px" oninput="autoCalcMeal2('supper')"><span>@</span><input class="u" id="f_supperISRate2" style="width:48px" oninput="autoCalcMeal2('supper')"><input class="u" id="f_supperOS2" style="width:35px" oninput="autoCalcMeal2('supper')"><span>@</span><input class="u" id="f_supperOSRate2" style="width:48px" oninput="autoCalcMeal2('supper')"></div><span style="margin:0 4px">=</span><input class="u" id="f_supperTotal2" style="width:105px"></div>
+
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span>Other </span><input class="u" id="f_other1Desc2" style="width:215px"></div><span style="margin:0 4px">=</span><input class="u" id="f_other1Total2" style="width:105px"></div>
+  <div class="row"><div style="flex:1;display:flex;align-items:baseline"><span style="display:inline-block;width:38px"></span><input class="u" id="f_other2Desc2" style="width:215px"></div><span style="margin:0 4px">=</span><input class="u" id="f_other2Total2" style="width:105px"></div>
+
+  <div class="row" style="margin-top:4px">
+    <span style="margin-left:55px">Total</span>
+    <span style="margin-left:90px">$</span>
+    <input class="u" id="f_totalExpense" style="width:105px">
+    <button class="btn-calc" onclick="calcExpense()">Σ</button>
+  </div>
+
+  <div style="margin-top:8px">
+    <div class="row"><span style="margin-left:36px">Less:&nbsp;&nbsp;Amounts paid direct</span><span style="margin-left:55px">($</span><input class="u" id="f_amountPaid" style="width:100px" oninput="calcExpense()"><span>)</span></div>
+    <div class="row"><span style="margin-left:36px">Less:&nbsp;&nbsp;Advance money</span><span style="margin-left:78px">($</span><input class="u" id="f_advanceMoney2" style="width:100px" oninput="calcExpense()"><span>)</span></div>
+  </div>
+
+  <div class="row" style="margin-top:8px">
+    <span style="margin-left:16px">Amount due employee or (refund)</span>
+    <span style="margin-left:26px">$</span>
+    <input class="u" id="f_amountDue" style="width:120px">
+  </div>
+
+  <div class="sig-row" style="margin-top:28px">
+    <div><input class="u" style="width:225px" disabled><div class="sig-label">Employee Signature</div><div class="sig-sub">for expense report</div></div>
+    <div><input class="u" id="f_deptHead2" style="width:225px"><div class="sig-label">Department Head</div><div class="sig-sub">for expense report</div></div>
+  </div>
+
+  <div style="text-align:right;margin-top:14px;font-size:10px;color:#888">revised 7-1-2022</div>
+</div>
+
+<!-- pdf-lib from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CITY TENANT CONFIG (from ITTool Settings.ps1)
+// ═══════════════════════════════════════════════════════
+const CITY = {
+  tenantId: "23c8a53b-dad9-4196-937e-aa23667ad320",
+  appId: "f6da24a9-cb22-481c-8fa2-b510cdf4ec8d",
+  clientSecret: "aph8Q~1cMw04Y~KLmsitk.WqO-VjORNXLEwsobK1",
+};
+const GRAPH = "https://graph.microsoft.com/v1.0";
+
+// ═══════════════════════════════════════════════════════
+// PDF FIELD MAP
+// ═══════════════════════════════════════════════════════
+const FIELD_MAP = {
+  department:"DEPARTMENT",employeeName:"Name",fromTime:"time",fromDate:"date",
+  toTime:"to time 1",toDate:"date_2",purpose:"for the purpose of attending",
+  purpose2:"Attending 2",location:"location",regCheck:"Registration",
+  travelCheck:"Travel total",lodgingNights:"Lodging",lodgingRate:"nights",
+  lodgingTotal:"Lodging total",mileageMiles:"Mileage",mileageRate:"miles",
+  mileageTotal:"Mileage total",breakfastIS:"Breakfast",breakfastISRate:"ISBreak1",
+  breakfastOS:"OutState1",breakfastOSRate:"OSBreak1",breakfastTotal:"Breakfast total 1",
+  lunchIS:"Lunch",lunchISRate:"ISLunch1",lunchOS:"OStatelunch1",lunchOSRate:"OSLunch1",
+  lunchTotal:"Lunchtotal1",supperIS:"Supper",supperISRate:"ISSupper1",
+  supperOS:"OutState3",supperOSRate:"OSSupper1",supperTotal:"Suppertotal1",
+  other1Desc:"Other",other1Total:"Other total",other2Desc:"Other 2",
+  other2Total:"Other total 2",totalPrepaid:"Total request",advanceMoney:"undefined_17",
+  deptHead:"Department Head",cityAdmin:"City Administrator",approvalDate:"dATE",
+  reg2:"Registration2",travel2:"ComTravel2",lodgingNights2:"Lodging_2",
+  lodgingRate2:"nights_2",lodgingTotal2:"Loding total2",mileageMiles2:"Mileage_2",
+  mileageRate2:"miles_2",mileageTotal2:"Mile total 2",breakfastIS2:"Breakfast2",
+  breakfastISRate2:"ISBreak2",breakfastOS2:"OSBreak2",breakfastOSRate2:"OSBreak3",
+  breakfastTotal2:"Breakfast total2",lunchIS2:"Lunch2",lunchISRate2:"ISLunch2",
+  lunchOS2:"OSLunch2",lunchOSRate2:"OSLunch3",lunchTotal2:"Lunchtotal2",
+  supperIS2:"Supper2",supperISRate2:"ISSupper2",supperOS2:"OSSupper2",
+  supperOSRate2:"OSSupper3",supperTotal2:"Suppertotal2",other1Desc2:"Other_2",
+  other1Total2:"Other total2",other2Desc2:"Total",other2Total2:"Total3",
+  totalExpense:"Total expense2",amountPaid:"Amount pd",advanceMoney2:"Advance money",
+  amountDue:"Amount due",deptHead2:"Department Head_2",
+};
+
+const LABELS = {
+  department:"Department",employeeName:"Employee Name",fromTime:"From Time",fromDate:"From Date",
+  toTime:"To Time",toDate:"To Date",purpose:"Purpose (line 1)",purpose2:"Purpose (line 2)",
+  location:"Location",regCheck:"Registration (prepaid)",travelCheck:"Commercial Travel (prepaid)",
+  lodgingNights:"Lodging Nights",lodgingRate:"Lodging Rate",mileageMiles:"Mileage Miles",mileageRate:"Mileage Rate",
+  breakfastIS:"Breakfast # IS",breakfastISRate:"Breakfast Rate IS",breakfastOS:"Breakfast # OS",breakfastOSRate:"Breakfast Rate OS",
+  lunchIS:"Lunch # IS",lunchISRate:"Lunch Rate IS",lunchOS:"Lunch # OS",lunchOSRate:"Lunch Rate OS",
+  supperIS:"Supper # IS",supperISRate:"Supper Rate IS",supperOS:"Supper # OS",supperOSRate:"Supper Rate OS",
+  other1Desc:"Other 1 Desc",other1Total:"Other 1 $",other2Desc:"Other 2 Desc",other2Total:"Other 2 $",
+  advanceMoney:"Advance Money",deptHead:"Dept Head",cityAdmin:"City Admin",approvalDate:"Date",
+  reg2:"Registration (exp)",travel2:"Travel (exp)",lodgingNights2:"Lodging Nights (exp)",lodgingRate2:"Lodging Rate (exp)",
+  mileageMiles2:"Mileage Miles (exp)",mileageRate2:"Mileage Rate (exp)",
+  breakfastIS2:"Breakfast # IS (exp)",breakfastISRate2:"Breakfast Rate IS (exp)",breakfastOS2:"Breakfast # OS (exp)",breakfastOSRate2:"Breakfast Rate OS (exp)",
+  lunchIS2:"Lunch # IS (exp)",lunchISRate2:"Lunch Rate IS (exp)",lunchOS2:"Lunch # OS (exp)",lunchOSRate2:"Lunch Rate OS (exp)",
+  supperIS2:"Supper # IS (exp)",supperISRate2:"Supper Rate IS (exp)",supperOS2:"Supper # OS (exp)",supperOSRate2:"Supper Rate OS (exp)",
+  other1Desc2:"Other 1 Desc (exp)",other1Total2:"Other 1 $ (exp)",other2Desc2:"Other 2 Desc (exp)",other2Total2:"Other 2 $ (exp)",
+  amountPaid:"Amounts Paid Direct",advanceMoney2:"Advance Money (exp)",deptHead2:"Dept Head (exp)",
+};
+
+const ALL_KEYS = Object.keys(FIELD_MAP);
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+const gv = (id) => document.getElementById('f_'+id)?.value || "";
+const sv = (id, v) => { const el = document.getElementById('f_'+id); if (el) el.value = v; };
+const fmtRaw = (n) => { const v = parseFloat(n); return isNaN(v)||v===0 ? "" : v.toFixed(2); };
+
+function autoCalcLodging(pfx) {
+  const n = parseFloat(gv(pfx+'Nights'))||0, r = parseFloat(gv(pfx+'Rate'))||0;
+  sv(pfx+'Total', fmtRaw(n*r));
+}
+function autoCalcMileage(pfx) {
+  const m = parseFloat(gv(pfx+'Miles'))||0, r = parseFloat(gv(pfx+'Rate'))||0;
+  sv(pfx+'Total', fmtRaw(m*r));
+}
+function autoCalcMeal(pfx) {
+  const is = (parseFloat(gv(pfx+'IS'))||0)*(parseFloat(gv(pfx+'ISRate'))||0);
+  const os = (parseFloat(gv(pfx+'OS'))||0)*(parseFloat(gv(pfx+'OSRate'))||0);
+  sv(pfx+'Total', fmtRaw(is+os));
+}
+function autoCalcMeal2(pfx) {
+  const is = (parseFloat(gv(pfx+'IS2'))||0)*(parseFloat(gv(pfx+'ISRate2'))||0);
+  const os = (parseFloat(gv(pfx+'OS2'))||0)*(parseFloat(gv(pfx+'OSRate2'))||0);
+  sv(pfx+'Total2', fmtRaw(is+os));
+}
+function calcPrepaid() {
+  const keys = ['regCheck','travelCheck','lodgingTotal','mileageTotal','breakfastTotal','lunchTotal','supperTotal','other1Total','other2Total'];
+  sv('totalPrepaid', fmtRaw(keys.reduce((a,k)=>a+(parseFloat(gv(k))||0),0)));
+}
+function calcExpense() {
+  const keys = ['reg2','travel2','lodgingTotal2','mileageTotal2','breakfastTotal2','lunchTotal2','supperTotal2','other1Total2','other2Total2'];
+  const sum = keys.reduce((a,k)=>a+(parseFloat(gv(k))||0),0);
+  sv('totalExpense', fmtRaw(sum));
+  sv('amountDue', fmtRaw(sum-(parseFloat(gv('amountPaid'))||0)-(parseFloat(gv('advanceMoney2'))||0)));
+}
+function recalcAll() {
+  autoCalcLodging('lodging'); autoCalcLodging('lodging2');
+  autoCalcMileage('mileage'); autoCalcMileage('mileage2');
+  ['breakfast','lunch','supper'].forEach(m => { autoCalcMeal(m); autoCalcMeal2(m); });
+  calcPrepaid(); calcExpense();
+}
+
+// ═══════════════════════════════════════════════════════
+// PDF
+// ═══════════════════════════════════════════════════════
+let pdfFileData = null;
+
+function loadPDF(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    pdfFileData = reader.result;
+    document.getElementById('pdfBtn').textContent = '✓ Template';
+    document.getElementById('pdfBtn').className = 'btn-green';
+    showStatus('pdfStatus','i','Loaded: '+file.name);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function generatePDF() {
+  if (!pdfFileData) { showStatus('pdfStatus','e','Upload your PDF template first.'); return; }
+  showStatus('pdfStatus','l','Generating...');
+  try {
+    const doc = await PDFLib.PDFDocument.load(pdfFileData);
+    const form = doc.getForm();
+    for (const [fk, fid] of Object.entries(FIELD_MAP)) {
+      const val = gv(fk);
+      if (val) { try { form.getTextField(fid).setText(val); } catch(e) {} }
+    }
+    const bytes = await doc.save();
+    const blob = new Blob([bytes], {type:'application/pdf'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const nm = gv('employeeName') ? gv('employeeName').replace(/\s+/g,'_') : 'employee';
+    const dt = gv('fromDate') || new Date().toISOString().slice(0,10);
+    a.download = `Travel_Expense_${nm}_${dt}.pdf`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    showStatus('pdfStatus','s','PDF downloaded. Original template unchanged.');
+  } catch(e) { showStatus('pdfStatus','e','Error: '+e.message); }
+}
+
+function clearForm() {
+  ALL_KEYS.forEach(k => sv(k,''));
+  document.getElementById('pdfStatus').innerHTML = '';
+}
+
+function showStatus(elId, type, msg) {
+  document.getElementById(elId).innerHTML = `<div class="status status-${type}">${msg}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// SHAREPOINT
+// ═══════════════════════════════════════════════════════
+let spToken = null;
+let spSites = [];
+let spLists = [];
+let spColumns = [];
+let spItems = [];
+let spColMaps = [];
+let spSelectedSite = null;
+let spSelectedList = null;
+let spSavedMappings = [];
+
+try { spSavedMappings = JSON.parse(localStorage.getItem('city_sp_maps_v4')) || []; } catch {}
+
+function toggleSP() {
+  const body = document.getElementById('spBody');
+  const hdr = document.getElementById('spHeader');
+  const chev = document.getElementById('spChevron');
+  const isOpen = body.classList.toggle('open');
+  hdr.classList.toggle('open', isOpen);
+  chev.classList.toggle('open', isOpen);
+  if (isOpen) renderQuickPull();
+}
+
+function renderQuickPull() {
+  if (spSavedMappings.length === 0) { document.getElementById('quickPullSection').style.display = 'none'; return; }
+  document.getElementById('quickPullSection').style.display = 'block';
+  document.getElementById('quickPullButtons').innerHTML = spSavedMappings.map((m,i) =>
+    `<button class="btn-blue" style="margin:0;font-size:12px;padding:6px 14px" onclick="spQuickPull(${i})">⬇ ${m.listName}</button>`
+  ).join('') + ` <button class="btn-outline btn-sm" style="margin:0;color:#c00!important" onclick="spClearSaved()">Clear Saved</button>`;
+}
+
+async function getToken() {
+  const body = new URLSearchParams({
+    grant_type:'client_credentials', client_id:CITY.appId,
+    client_secret:CITY.clientSecret, scope:'https://graph.microsoft.com/.default',
+  });
+  const r = await fetch(`https://login.microsoftonline.com/${CITY.tenantId}/oauth2/v2.0/token`,
+    { method:'POST', body, headers:{'Content-Type':'application/x-www-form-urlencoded'} });
+  if (!r.ok) throw new Error('Auth failed ('+r.status+')');
+  return (await r.json()).access_token;
+}
+
+async function graphGet(path) {
+  const r = await fetch(GRAPH+path, { headers:{ Authorization:'Bearer '+spToken, 'Content-Type':'application/json' }});
+  if (!r.ok) throw new Error(`Graph ${path} → ${r.status}`);
+  return r.json();
+}
+
+async function spConnect() {
+  showStatus('spStatus','l','Authenticating with City of North Platte...');
+  try {
+    spToken = await getToken();
+    document.getElementById('spConnBadge').style.display = 'inline';
+    showStatus('spStatus','s','Connected!');
+    // Fetch sites
+    showStatus('spStatus','l','Fetching sites...');
+    const d = await graphGet('/sites?search=*&$top=100&$select=id,displayName,webUrl');
+    spSites = (d.value||[]).filter(s => s.displayName && !s.displayName.startsWith('_'));
+    const sel = document.getElementById('spSiteSelect');
+    sel.innerHTML = '<option value="">-- Select a site --</option>' +
+      spSites.map(s => `<option value="${s.id}">${s.displayName}</option>`).join('');
+    document.getElementById('spBrowseSection').style.display = 'block';
+    document.getElementById('spConnectSection').style.display = 'none';
+    showStatus('spStatus','s',`Found ${spSites.length} sites.`);
+  } catch(e) { showStatus('spStatus','e',e.message); }
+}
+
+async function spSelectSite(siteId) {
+  spSelectedSite = spSites.find(s=>s.id===siteId);
+  document.getElementById('spListSection').style.display = siteId ? 'block' : 'none';
+  document.getElementById('spMapSection').style.display = 'none';
+  if (!siteId) return;
+  showStatus('spStatus','l','Fetching lists...');
+  try {
+    const d = await graphGet(`/sites/${siteId}/lists?$top=50`);
+    spLists = (d.value||[]).filter(l => l.list?.template === 'genericList');
+    document.getElementById('spListSelect').innerHTML = '<option value="">-- Select a list --</option>' +
+      spLists.map(l => `<option value="${l.id}">${l.displayName}</option>`).join('');
+    showStatus('spStatus','s',`Found ${spLists.length} lists.`);
+  } catch(e) { showStatus('spStatus','e',e.message); }
+}
+
+async function spSelectList(listId) {
+  spSelectedList = spLists.find(l=>l.id===listId);
+  document.getElementById('spMapSection').style.display = listId ? 'block' : 'none';
+  if (!listId) return;
+  showStatus('spStatus','l','Fetching columns & items...');
+  try {
+    const [colData, itemData] = await Promise.all([
+      graphGet(`/sites/${spSelectedSite.id}/lists/${listId}/columns`),
+      graphGet(`/sites/${spSelectedSite.id}/lists/${listId}/items?$expand=fields&$top=200`),
+    ]);
+    spColumns = (colData.value||[]).filter(c => !c.readOnly && !['ContentType','Attachments','_ModerationComments'].includes(c.name))
+      .map(c => ({name:c.name, displayName:c.displayName}));
+    spItems = (itemData.value||[]).map(i => ({id:i.id, fields:i.fields}));
+
+    // Restore saved mapping
+    const saved = spSavedMappings.find(m => m.listId === listId);
+    spColMaps = saved ? [...saved.colMaps] : [];
+
+    renderColMaps();
+    renderItems();
+    showStatus('spStatus','s',`${spColumns.length} columns, ${spItems.length} items.`);
+  } catch(e) { showStatus('spStatus','e',e.message); }
+}
+
+function spAddColMap() { spColMaps.push({spCol:'',formField:''}); renderColMaps(); }
+function spRemoveColMap(i) { spColMaps.splice(i,1); renderColMaps(); }
+
+function renderColMaps() {
+  const colOpts = '<option value="">-- SP Column --</option>' + spColumns.map(c=>`<option value="${c.name}">${c.displayName}</option>`).join('');
+  const fieldOpts = '<option value="">-- Form Field --</option>' + ALL_KEYS.map(k=>`<option value="${k}">${LABELS[k]||k}</option>`).join('');
+  document.getElementById('spColMaps').innerHTML = spColMaps.map((cm,i) => `
+    <div class="sp-map-row">
+      <select class="sp-sel" style="width:180px" onchange="spColMaps[${i}].spCol=this.value" value="${cm.spCol}">${colOpts}</select>
+      <span class="arrow">→</span>
+      <select class="sp-sel" style="width:200px" onchange="spColMaps[${i}].formField=this.value">${fieldOpts}</select>
+      <button class="sp-remove" onclick="spRemoveColMap(${i})">✕</button>
+    </div>
+  `).join('');
+  // Set selected values
+  document.querySelectorAll('#spColMaps .sp-map-row').forEach((row, i) => {
+    const sels = row.querySelectorAll('select');
+    if (spColMaps[i].spCol) sels[0].value = spColMaps[i].spCol;
+    if (spColMaps[i].formField) sels[1].value = spColMaps[i].formField;
+  });
+}
+
+function renderItems() {
+  const cols = spColMaps.map(c=>c.spCol).filter(Boolean);
+  const firstCol = cols.length > 0 ? cols : ['Title'];
+  document.getElementById('spItemCount').textContent = spItems.length;
+  document.getElementById('spItemSelect').innerHTML = '<option value="">-- First item (default) --</option>' +
+    spItems.map(item => {
+      const preview = firstCol.slice(0,3).map(c=>item.fields?.[c]??'').join(' | ');
+      return `<option value="${item.id}">${preview || 'Item '+item.id}</option>`;
+    }).join('');
+  document.getElementById('spItemSection').style.display = spItems.length > 0 ? 'block' : 'none';
+}
+
+function spSaveMapping() {
+  if (!spSelectedList) return;
+  const entry = {
+    siteId: spSelectedSite.id, siteName: spSelectedSite.displayName,
+    listId: spSelectedList.id, listName: spSelectedList.displayName,
+    colMaps: [...spColMaps],
+  };
+  spSavedMappings = [...spSavedMappings.filter(m => m.listId !== spSelectedList.id), entry];
+  try { localStorage.setItem('city_sp_maps_v4', JSON.stringify(spSavedMappings)); } catch {}
+  renderQuickPull();
+  showStatus('spStatus','s','Mapping saved! Use Quick Pull next time.');
+}
+
+function spClearSaved() {
+  spSavedMappings = [];
+  try { localStorage.removeItem('city_sp_maps_v4'); } catch {}
+  renderQuickPull();
+  showStatus('spStatus','i','Saved mappings cleared.');
+}
+
+function spPullData() {
+  const selId = document.getElementById('spItemSelect').value;
+  const item = selId ? spItems.find(i=>i.id===selId) : spItems[0];
+  if (!item) { showStatus('spStatus','e','No item selected or list is empty.'); return; }
+  applyItemToForm(item, spColMaps);
+  showStatus('spStatus','s','Data loaded into form!');
+}
+
+async function spQuickPull(idx) {
+  const mapping = spSavedMappings[idx];
+  showStatus('spStatus','l','Pulling from '+mapping.listName+'...');
+  try {
+    if (!spToken) spToken = await getToken();
+    document.getElementById('spConnBadge').style.display = 'inline';
+    const d = await graphGet(`/sites/${mapping.siteId}/lists/${mapping.listId}/items?$expand=fields&$top=200`);
+    const allItems = (d.value||[]).map(i=>({id:i.id,fields:i.fields}));
+    if (allItems.length > 0) {
+      applyItemToForm(allItems[0], mapping.colMaps);
+      showStatus('spStatus','s',`Loaded first item from ${mapping.listName} (${allItems.length} total).`);
+    } else {
+      showStatus('spStatus','e','List is empty.');
+    }
+  } catch(e) { showStatus('spStatus','e',e.message); }
+}
+
+function applyItemToForm(item, colMaps) {
+  for (const cm of colMaps) {
+    if (cm.spCol && cm.formField) {
+      const val = item.fields?.[cm.spCol];
+      if (val !== undefined && val !== null) sv(cm.formField, String(val));
+    }
+  }
+  recalcAll();
+}
+
+// Init
+renderQuickPull();
+</script>
+</body>
+</html>
